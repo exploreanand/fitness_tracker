@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Tracker Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #a78bfa, #3b82f6);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: all 0.3s ease;
+        }
+        .glass:hover {
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.25);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .card {
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.85);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        input, select {
+            transition: all 0.3s ease;
+        }
+        input:focus, select:focus {
+            transform: scale(1.01);
+        }
+        #chartContainer, #intensityChart {
+            max-width: 100%;
+            height: 300px;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .section-header {
+            position: relative;
+            display: inline-block;
+        }
+        .section-header:after {
+            content: '';
+            position: absolute;
+            width: 50%;
+            height: 2px;
+            bottom: -4px;
+            left: 25%;
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+        }
+        .analytics-header {
+            color: #4f46e5; /* Changed text color for Workout Analytics */
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4 pb-8">
+    <div id="loaderContainer" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg flex flex-col items-center">
+            <div class="loading"></div>
+            <p class="mt-2 text-gray-700">Loading Fitness Tracker...</p>
+        </div>
+    </div>
+
+    <header class="w-full max-w-xl mb-6 text-white text-center">
+        <h1 class="text-4xl font-bold mt-4 mb-2 animate__animated animate__fadeInDown">Fitness Tracker Pro</h1>
+        <p class="text-lg opacity-90 animate__animated animate__fadeIn animate__delay-1s">Track your workouts, calories, and progress</p>
+    </header>
+
+    <!-- User Details Form -->
+    <form id="userDetails" class="w-full max-w-md glass p-6 mb-6 animate__animated animate__fadeInUp">
+        <h2 class="text-xl font-semibold text-white mb-4 section-header">Your Details</h2>
+        <div class="space-y-4">
+            <div class="relative">
+                <input type="text" id="name" placeholder="Name" aria-label="Name" class="w-full p-3 pl-4 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white bg-opacity-90">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <input type="number" id="age" placeholder="Age" aria-label="Age" class="w-full p-3 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white bg-opacity-90">
+                <input type="number" id="weight" placeholder="Weight (kg)" aria-label="Weight in kilograms" class="w-full p-3 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white bg-opacity-90">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <input type="number" id="height" placeholder="Height (cm)" aria-label="Height in centimeters" class="w-full p-3 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white bg-opacity-90">
+                <input type="number" id="calorieIntake" placeholder="Daily Calories" aria-label="Daily Calorie Intake" class="w-full p-3 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white bg-opacity-90">
+            </div>
+            <select id="fitnessGoal" aria-label="Fitness Goal" class="w-full p-3 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white bg-opacity-90">
+                <option value="" disabled selected>Select Fitness Goal</option>
+                <option value="WeightLoss">Weight Loss</option>
+                <option value="MuscleGain">Muscle Gain</option>
+                <option value="MaintainWeight">Maintain Weight</option>
+            </select>
+            <button type="button" onclick="saveUser()" class="w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 btn font-medium">Save Details</button>
+        </div>
+    </form>
+
+    <!-- Workout Input Form -->
+    <form id="workoutForm" class="w-full max-w-md glass p-6 mb-6 animate__animated animate__fadeInUp animate__delay-1s">
+        <h2 class="text-xl font-semibold text-white mb-4 section-header">Add Workout</h2>
+        <div class="space-y-4">
+            <input type="text" id="exercise" placeholder="Exercise (e.g., Running, Yoga, HIIT)" aria-label="Exercise type" class="w-full p-3 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white bg-opacity-90">
+            <div class="grid grid-cols-2 gap-4">
+                <input type="number" id="duration" placeholder="Duration (minutes)" aria-label="Workout duration in minutes" class="w-full p-3 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white bg-opacity-90">
+                <select id="intensity" aria-label="Workout intensity" class="w-full p-3 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white bg-opacity-90">
+                    <option value="" disabled selected>Intensity</option>
+                    <option value="Low">Low</option>
+                    <option value="Moderate">Moderate</option>
+                    <option value="High">High</option>
+                </select>
+            </div>
+            <button type="button" onclick="addWorkout()" id="addWorkoutBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 btn font-medium">Add Workout</button>
+        </div>
+    </form>
+
+    <!-- Chart Container -->
+    <div class="w-full max-w-md glass p-6 mb-6 animate__animated animate__fadeInUp animate__delay-2s">
+        <h2 class="text-xl font-semibold analytics-header mb-4 section-header">Workout Analytics</h2>
+        <canvas id="chartContainer" class="my-4 bg-blue-100 bg-opacity-50 p-4 rounded-lg"></canvas>
+        <canvas id="intensityChart" class="my-4 bg-blue-100 bg-opacity-50 p-4 rounded-lg"></canvas>
+    </div>
+
+    <!-- Summary and Feedback -->
+    <div class="w-full max-w-md glass p-6 mb-6 animate__animated animate__fadeInUp animate__delay-3s">
+        <h2 class="text-xl font-semibold text-white mb-4 section-header">Summary</h2>
+        <div id="summary" class="space-y-4 mt-2"></div>
+        <div id="noDataMessage" class="text-center p-6 text-white opacity-70">No data available yet. Fill in your details and add workouts to see your summary.</div>
+        <div class="flex justify-between mt-6">
+            <button onclick="clearWorkouts()" class="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 btn">Clear Data</button>
+            <button onclick="exportWorkouts()" class="bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600 btn">Export CSV</button>
+        </div>
+    </div>
+
+    <div id="notification" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 transition-transform duration-300 flex items-center">
+        <span id="notificationText">Success!</span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="fitness_tracker.js"></script>
+    <script>
+        let tracker;
+        let chart;
+        let intensityChart;
+        let isUserSet = false;
+
+        console.log("Loading FitnessTrackerModule...");
+        FitnessTrackerModule().then(module => {
+            console.log("Module loaded, initializing FitnessTracker...");
+            tracker = new module.FitnessTracker();
+            console.log("FitnessTracker initialized");
+            setTimeout(() => {
+                document.getElementById('loaderContainer').classList.add('fade-out');
+                setTimeout(() => {
+                    document.getElementById('loaderContainer').style.display = 'none';
+                }, 500);
+            }, 1000);
+            loadUser();
+            loadWorkouts();
+            updateChart();
+            updateUI();
+        }).catch(error => {
+            console.error("Error loading FitnessTracker:", error);
+            document.getElementById('loaderContainer').innerHTML = `
+                <div class="bg-white p-6 rounded-lg">
+                    <p class="text-red-500 font-bold">Error loading application</p>
+                    <p class="mt-2 text-gray-700">Please refresh the page or check console for details.</p>
+                </div>
+            `;
+        });
+
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.classList.remove('bg-green-500', 'bg-red-500');
+            notification.classList.add(isError ? 'bg-red-500' : 'bg-green-500');
+            document.getElementById('notificationText').textContent = message;
+            notification.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                notification.style.transform = 'translateY(20rem)';
+            }, 3000);
+        }
+
+        function saveUser() {
+            console.log("Saving user details...");
+            const name = document.getElementById("name").value.trim();
+            const age = parseInt(document.getElementById("age").value);
+            const height = parseFloat(document.getElementById("height").value);
+            const weight = parseFloat(document.getElementById("weight").value);
+            const calorieIntake = parseInt(document.getElementById("calorieIntake").value);
+            const fitnessGoal = document.getElementById("fitnessGoal").value;
+
+            if (name && !isNaN(age) && age > 0 && !isNaN(height) && height > 0 && !isNaN(weight) && weight > 0 && !isNaN(calorieIntake) && calorieIntake >= 0 && fitnessGoal) {
+                try {
+                    tracker.setUser(name, age, height, weight, calorieIntake, fitnessGoal);
+                    localStorage.setItem("user", JSON.stringify({ name, age, height, weight, calorieIntake, fitnessGoal }));
+                    console.log("User details saved:", { name, age, height, weight, calorieIntake, fitnessGoal });
+                    isUserSet = true;
+                    showNotification("User details saved successfully!");
+                    updateSummary();
+                    updateUI();
+                } catch (err) {
+                    console.error("Error saving user:", err);
+                    showNotification("Failed to save user details.", true);
+                }
+            } else {
+                console.log("Invalid user inputs:", { name, age, height, weight, calorieIntake, fitnessGoal });
+                showNotification("Please fill in all fields with valid values.", true);
+            }
+        }
+
+        function addWorkout() {
+            console.log("Adding workout...");
+            const exercise = document.getElementById("exercise").value.trim();
+            const duration = parseInt(document.getElementById("duration").value);
+            const intensity = document.getElementById("intensity").value;
+
+            console.log("Workout inputs:", { exercise, duration, intensity });
+
+            if (!isUserSet) {
+                console.log("User details not set");
+                showNotification("Please save your details first!", true);
+                return;
+            }
+
+            if (exercise && !isNaN(duration) && duration > 0 && intensity && ["Low", "Moderate", "High"].includes(intensity)) {
+                const addBtn = document.getElementById('addWorkoutBtn');
+                const originalText = addBtn.textContent;
+                addBtn.innerHTML = '<span class="loading mr-2"></span> Adding...';
+                addBtn.disabled = true;
+
+                try {
+                    tracker.addWorkout(exercise, duration, intensity);
+                    const workouts = JSON.parse(localStorage.getItem("workouts") || "[]");
+                    workouts.push({ exercise, duration, intensity, date: new Date().toISOString() });
+                    localStorage.setItem("workouts", JSON.stringify(workouts));
+                    console.log("Workout added:", { exercise, duration, intensity });
+                    document.getElementById("exercise").value = "";
+                    document.getElementById("duration").value = "";
+                    document.getElementById("intensity").value = "";
+                    updateSummary();
+                    updateChart();
+                    updateUI();
+                    showNotification("Workout added successfully!");
+                } catch (err) {
+                    console.error("Error adding workout:", err);
+                    showNotification("Failed to add workout. Please try again.", true);
+                } finally {
+                    addBtn.innerHTML = originalText;
+                    addBtn.disabled = false;
+                }
+            } else {
+                console.log("Invalid workout inputs:", { exercise, duration, intensity });
+                showNotification("Please enter a valid exercise, duration, and intensity.", true);
+            }
+        }
+
+        function updateUI() {
+            const workouts = JSON.parse(localStorage.getItem("workouts") || "[]");
+            const noDataMessage = document.getElementById('noDataMessage');
+            noDataMessage.style.display = (isUserSet || workouts.length > 0) ? 'none' : 'block';
+        }
+
+        function updateSummary() {
+            console.log("Updating summary...");
+            const user = JSON.parse(localStorage.getItem("user") || "{}");
+            const workouts = JSON.parse(localStorage.getItem("workouts") || "[]");
+            const summaryDiv = document.getElementById("summary");
+            summaryDiv.innerHTML = "";
+
+            if (user.name) {
+                const userCard = document.createElement("div");
+                userCard.className = "card p-4 rounded-lg shadow fade-in";
+                userCard.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <strong class="text-lg text-indigo-700">${user.name}'s Profile</strong>
+                        <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">${user.fitnessGoal.replace(/([A-Z])/g, ' $1').trim()}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-y-2 text-sm text-gray-600">
+                        <div>Age: <span class="font-medium text-gray-800">${user.age} years</span></div>
+                        <div>Height: <span class="font-medium text-gray-800">${user.height} cm</span></div>
+                        <div>Weight: <span class="font-medium text-gray-800">${user.weight} kg</span></div>
+                        <div>Daily Intake: <span class="font-medium text-gray-800">${user.calorieIntake} kcal</span></div>
+                    </div>
+                `;
+                summaryDiv.appendChild(userCard);
+            }
+
+            if (workouts.length > 0) {
+                try {
+                    const dailySummaryCard = document.createElement("div");
+                    dailySummaryCard.className = "card p-4 rounded-lg shadow mt-4 fade-in";
+                    const estimatedBurn = Math.round(tracker.getDailyCalorieBurn());
+                    const targetCalories = Math.round(tracker.getTargetCalories());
+                    const workoutCalories = Math.round(tracker.getWorkoutCalories());
+                    let goalClass = "text-yellow-600";
+                    if (user.fitnessGoal === "WeightLoss" && workoutCalories > 300) {
+                        goalClass = "text-green-600";
+                    } else if (user.fitnessGoal === "MuscleGain" && workoutCalories > 200) {
+                        goalClass = "text-green-600";
+                    }
+                    dailySummaryCard.innerHTML = `
+                        <strong class="text-lg text-indigo-700">Daily Summary</strong>
+                        <div class="flex justify-between mt-3 mb-2">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold ${goalClass}">${estimatedBurn}</div>
+                                <div class="text-xs text-gray-500">Est. Daily Burn</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-indigo-600">${targetCalories}</div>
+                                <div class="text-xs text-gray-500">Target Calories</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-green-600">${workoutCalories}</div>
+                                <div class="text-xs text-gray-500">Workout Calories</div>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-200">
+                            <div class="font-medium">Feedback:</div>
+                            <div class="text-gray-700">${tracker.getFeedback()}</div>
+                        </div>
+                    `;
+                    summaryDiv.appendChild(dailySummaryCard);
+
+                    const workoutListCard = document.createElement("div");
+                    workoutListCard.className = "card p-4 rounded-lg shadow mt-4 fade-in";
+                    workoutListCard.innerHTML = `<strong class="text-lg text-indigo-700">Recent Workouts</strong>`;
+                    const workoutList = document.createElement("div");
+                    workoutList.className = "space-y-3 mt-3";
+                    workouts.slice(-5).reverse().forEach((workout, index) => {
+                        const workoutItem = document.createElement("div");
+                        workoutItem.className = "flex justify-between items-center border-b border-gray-100 pb-2";
+                        let intensityClass = "bg-blue-100 text-blue-800";
+                        if (workout.intensity === "Moderate") {
+                            intensityClass = "bg-yellow-100 text-yellow-800";
+                        } else if (workout.intensity === "High") {
+                            intensityClass = "bg-red-100 text-red-800";
+                        }
+                        workoutItem.innerHTML = `
+                            <div>
+                                <div class="font-medium">${workout.exercise}</div>
+                                <div class="text-xs text-gray-500">${new Date(workout.date).toLocaleString()}</div>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-sm px-2 py-1 ${intensityClass} rounded-full mr-3">${workout.intensity}</span>
+                                <span class="text-sm font-medium">${workout.duration} min</span>
+                                <button onclick="deleteWorkout(${workouts.length - 1 - index})" class="ml-3 text-red-500 hover:text-red-700" aria-label="Delete workout">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        `;
+                        workoutList.appendChild(workoutItem);
+                    });
+                    workoutListCard.appendChild(workoutList);
+                    summaryDiv.appendChild(workoutListCard);
+                } catch (err) {
+                    console.error("Error updating summary:", err);
+                    showNotification("Error loading summary.", true);
+                }
+            }
+        }
+
+        function deleteWorkout(index) {
+            console.log("Deleting workout at index:", index);
+            try {
+                const workouts = JSON.parse(localStorage.getItem("workouts") || "[]");
+                workouts.splice(index, 1);
+                localStorage.setItem("workouts", JSON.stringify(workouts));
+                tracker.clearWorkouts();
+                workouts.forEach(w => tracker.addWorkout(w.exercise, w.duration, w.intensity));
+                updateSummary();
+                updateChart();
+                updateUI();
+                showNotification("Workout deleted!");
+            } catch (err) {
+                console.error("Error deleting workout:", err);
+                showNotification("Failed to delete workout.", true);
+            }
+        }
+
+        function clearWorkouts() {
+            console.log("Clearing workouts...");
+            if (confirm("Are you sure you want to clear all workouts?")) {
+                try {
+                    localStorage.removeItem("workouts");
+                    tracker.clearWorkouts();
+                    updateSummary();
+                    updateChart();
+                    updateUI();
+                    showNotification("All workouts cleared!");
+                } catch (err) {
+                    console.error("Error clearing workouts:", err);
+                    showNotification("Failed to clear workouts.", true);
+                }
+            }
+        }
+
+        function exportWorkouts() {
+            console.log("Exporting workouts...");
+            try {
+                const workouts = JSON.parse(localStorage.getItem("workouts") || "[]");
+                if (workouts.length === 0) {
+                    showNotification("No workouts to export!", true);
+                    return;
+                }
+                let csv = "Exercise,Duration,Intensity,Date\n";
+                workouts.forEach(w => {
+                    csv += `"${w.exercise}",${w.duration},${w.intensity},${w.date}\n`;
+                });
+                const blob = new Blob([csv], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "workouts.csv";
+                a.click();
+                URL.revokeObjectURL(url);
+                showNotification("Workouts exported successfully!");
+            } catch (err) {
+                console.error("Error exporting workouts:", err);
+                showNotification("Failed to export workouts.", true);
+            }
+        }
+
+        function loadUser() {
+            console.log("Loading user...");
+            try {
+                const user = JSON.parse(localStorage.getItem("user") || "{}");
+                if (user.name) {
+                    isUserSet = true;
+                    tracker.setUser(user.name, user.age, user.height, user.weight, user.calorieIntake, user.fitnessGoal);
+                    document.getElementById("name").value = user.name;
+                    document.getElementById("age").value = user.age;
+                    document.getElementById("height").value = user.height;
+                    document.getElementById("weight").value = user.weight;
+                    document.getElementById("calorieIntake").value = user.calorieIntake;
+                    document.getElementById("fitnessGoal").value = user.fitnessGoal;
+                    console.log("User loaded:", user);
+                }
+            } catch (err) {
+                console.error("Error loading user:", err);
+            }
+        }
+
+        function loadWorkouts() {
+            console.log("Loading workouts...");
+            try {
+                const workouts = JSON.parse(localStorage.getItem("workouts") || "[]");
+                workouts.forEach(w => tracker.addWorkout(w.exercise, w.duration, w.intensity));
+                updateSummary();
+                console.log("Workouts loaded:", workouts);
+            } catch (err) {
+                console.error("Error loading workouts:", err);
+            }
+        }
+
+        function updateChart() {
+            console.log("Updating chart...");
+            try {
+                const workouts = JSON.parse(localStorage.getItem("workouts") || "[]");
+                if (workouts.length === 0) {
+                    if (chart) chart.destroy();
+                    if (intensityChart) intensityChart.destroy();
+                    return;
+                }
+
+                const intensities = ["Low", "Moderate", "High"];
+                const durations = intensities.map(int => 
+                    workouts.filter(w => w.intensity === int).reduce((sum, w) => sum + w.duration, 0)
+                );
+
+                const workoutTypes = [...new Set(workouts.map(w => w.exercise))];
+                const workoutData = workoutTypes.map(type => ({
+                    type,
+                    total: workouts.filter(w => w.exercise === type).reduce((sum, w) => sum + w.duration, 0)
+                })).sort((a, b) => b.total - a.total).slice(0, 5);
+
+                if (chart) chart.destroy();
+                chart = new Chart(document.getElementById("chartContainer"), {
+                    type: "bar",
+                    data: {
+                        labels: workoutData.map(d => d.type),
+                        datasets: [{
+                            label: "Minutes per Activity",
+                            data: workoutData.map(d => d.total),
+                            backgroundColor: [
+                                "rgba(59, 130, 246, 0.7)",
+                                "rgba(16, 185, 129, 0.7)",
+                                "rgba(239, 68, 68, 0.7)",
+                                "rgba(249, 115, 22, 0.7)",
+                                "rgba(139, 92, 246, 0.7)"
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: "top", labels: { color: "#ffffff" } },
+                            title: { display: true, text: "Workout Duration by Activity", color: "#ffffff", font: { size: 16 } }
+                        },
+                        scales: {
+                            x: { ticks: { color: "#ffffff" }, grid: { display: false } },
+                            y: { ticks: { color: "#ffffff" }, grid: { color: "rgba(255, 255, 255, 0.1)" } }
+                        }
+                    }
+                });
+
+                if (intensityChart) intensityChart.destroy();
+                intensityChart = new Chart(document.getElementById("intensityChart"), {
+                    type: "doughnut",
+                    data: {
+                        labels: intensities,
+                        datasets: [{
+                            data: durations,
+                            backgroundColor: [
+                                "rgba(59, 130, 246, 0.8)",
+                                "rgba(249, 115, 22, 0.8)",
+                                "rgba(239, 68, 68, 0.8)"
+                            ],
+                            borderColor: "#ffffff",
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: "top", labels: { color: "#ffffff" } },
+                            title: { display: true, text: "Intensity Distribution", color: "#ffffff", font: { size: 16 } }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Error updating chart:", err);
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') {
+                const inputs = Array.from(document.querySelectorAll('#userDetails input, #userDetails select, #workoutForm input, #workoutForm select'));
+                const currentIndex = inputs.indexOf(document.activeElement);
+                if (currentIndex !== -1 && currentIndex < inputs.length - 1) {
+                    inputs[currentIndex + 1].focus();
+                    e.preventDefault();
+                } else if (currentIndex !== -1) {
+                    e.preventDefault();
+                    if (document.activeElement.closest('#userDetails')) {
+                        saveUser();
+                    } else if (document.activeElement.closest('#workoutForm')) {
+                        addWorkout();
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
